@@ -126,7 +126,7 @@ function App() {
   };
 
   return (
-    <div className="App bg-black text-white min-h-screen">
+    <div className={`App ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'} min-h-screen`}>
       <BrowserRouter>
         <Routes>
           <Route 
@@ -137,13 +137,24 @@ function App() {
                   profile={currentProfile}
                   myList={myList}
                   continueWatching={continueWatching}
+                  watchHistory={watchHistory}
+                  downloads={downloads}
+                  notifications={notifications}
+                  ratings={ratings}
+                  theme={theme}
                   addToMyList={addToMyList}
                   removeFromMyList={removeFromMyList}
                   addToContinueWatching={addToContinueWatching}
+                  addToWatchHistory={addToWatchHistory}
+                  addToDownloads={addToDownloads}
+                  removeFromDownloads={removeFromDownloads}
+                  addNotification={addNotification}
+                  rateContent={rateContent}
+                  setTheme={setTheme}
                   setCurrentProfile={setCurrentProfile}
                 />
               ) : (
-                <ProfileSelection setCurrentProfile={setCurrentProfile} />
+                <ProfileSelection setCurrentProfile={setCurrentProfile} theme={theme} />
               )
             } 
           />
@@ -153,9 +164,13 @@ function App() {
               <SearchScreen 
                 profile={currentProfile}
                 myList={myList}
+                ratings={ratings}
+                theme={theme}
                 addToMyList={addToMyList}
                 removeFromMyList={removeFromMyList}
+                rateContent={rateContent}
                 setCurrentProfile={setCurrentProfile}
+                setTheme={setTheme}
               />
             } 
           />
@@ -165,9 +180,13 @@ function App() {
               <BrowseCategories 
                 profile={currentProfile}
                 myList={myList}
+                ratings={ratings}
+                theme={theme}
                 addToMyList={addToMyList}
                 removeFromMyList={removeFromMyList}
+                rateContent={rateContent}
                 setCurrentProfile={setCurrentProfile}
+                setTheme={setTheme}
               />
             } 
           />
@@ -176,6 +195,23 @@ function App() {
             element={
               <VideoPlayer 
                 addToContinueWatching={addToContinueWatching}
+                addToWatchHistory={addToWatchHistory}
+                rateContent={rateContent}
+                ratings={ratings}
+                theme={theme}
+              />
+            } 
+          />
+          <Route 
+            path="/downloads" 
+            element={
+              <DownloadsScreen 
+                profile={currentProfile}
+                downloads={downloads}
+                removeFromDownloads={removeFromDownloads}
+                theme={theme}
+                setCurrentProfile={setCurrentProfile}
+                setTheme={setTheme}
               />
             } 
           />
