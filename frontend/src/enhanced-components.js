@@ -2,6 +2,160 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
+// Import NetflixHeader from main components
+const NetflixHeader = ({ profile, setCurrentProfile, theme, setTheme, notifications }) => {
+  const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Netflix Profiles Data
+  const NETFLIX_PROFILES = [
+    { 
+      id: 1, 
+      name: 'John', 
+      avatar: '👨', 
+      color: 'bg-blue-600',
+      isKid: false,
+      maturityRating: 'All',
+      language: 'English'
+    },
+    { 
+      id: 2, 
+      name: 'Sarah', 
+      avatar: '👩', 
+      color: 'bg-pink-600',
+      isKid: false,
+      maturityRating: 'All',
+      language: 'English'
+    },
+    { 
+      id: 3, 
+      name: 'Kids', 
+      avatar: '👶', 
+      color: 'bg-yellow-500',
+      isKid: true,
+      maturityRating: 'Kids',
+      language: 'English'
+    },
+    { 
+      id: 4, 
+      name: 'Guest', 
+      avatar: '👤', 
+      color: 'bg-gray-600',
+      isKid: false,
+      maturityRating: 'All',
+      language: 'English'
+    },
+  ];
+
+  return (
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-b ${theme === 'dark' ? 'from-black via-black/80' : 'from-white via-white/80'} to-transparent p-4`}>
+      <div className="flex items-center justify-between">
+        {/* Logo */}
+        <div onClick={() => navigate('/')} className="cursor-pointer">
+          <h1 className="text-2xl font-bold text-red-600 tracking-wide">NETFLIX</h1>
+        </div>
+        
+        {/* Navigation - Hidden on mobile */}
+        <nav className={`hidden md:flex space-x-6 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+          <button onClick={() => navigate('/')} className="hover:text-gray-500">Home</button>
+          <button onClick={() => navigate('/browse/tv')} className="hover:text-gray-500">TV Shows</button>
+          <button onClick={() => navigate('/browse/movie')} className="hover:text-gray-500">Movies</button>
+          <button onClick={() => navigate('/browse/popular')} className="hover:text-gray-500">Popular</button>
+          <button onClick={() => navigate('/browse/kids')} className="hover:text-gray-500">Kids</button>
+          <button onClick={() => navigate('/browse/anime')} className="hover:text-gray-500">Anime</button>
+        </nav>
+        
+        {/* Right Section */}
+        <div className="flex items-center space-x-4">
+          {/* Theme Toggle */}
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className={`${theme === 'dark' ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
+          >
+            {theme === 'dark' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
+
+          {/* Search */}
+          <button 
+            onClick={() => navigate('/search')} 
+            className={`${theme === 'dark' ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
+          {/* Downloads */}
+          <button 
+            onClick={() => navigate('/downloads')}
+            className={`${theme === 'dark' ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'}`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </button>
+          
+          {/* Profile */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className={`w-8 h-8 ${profile.color} rounded flex items-center justify-center text-sm relative`}
+            >
+              {profile.avatar}
+              {profile.isKid && (
+                <div className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full h-3 w-3"></div>
+              )}
+            </button>
+            
+            {showProfileMenu && (
+              <div className={`absolute right-0 mt-2 w-48 ${theme === 'dark' ? 'bg-black/90 border-gray-600' : 'bg-white/90 border-gray-300'} border rounded-md py-2 shadow-xl profile-menu`}>
+                {NETFLIX_PROFILES.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      setCurrentProfile(p);
+                      setShowProfileMenu(false);
+                    }}
+                    className={`flex items-center w-full px-4 py-2 ${theme === 'dark' ? 'text-white hover:bg-gray-800' : 'text-black hover:bg-gray-100'} ${p.id === profile.id ? 'bg-gray-800' : ''}`}
+                  >
+                    <div className={`w-6 h-6 ${p.color} rounded mr-3 flex items-center justify-center text-xs relative`}>
+                      {p.avatar}
+                      {p.isKid && (
+                        <div className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full h-2 w-2"></div>
+                      )}
+                    </div>
+                    {p.name}
+                    {p.isKid && <span className="ml-auto text-xs text-yellow-500">KIDS</span>}
+                  </button>
+                ))}
+                <hr className={`${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} my-2`} />
+                <button 
+                  onClick={() => {
+                    setCurrentProfile(null);
+                    setShowProfileMenu(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 ${theme === 'dark' ? 'text-white hover:bg-gray-800' : 'text-black hover:bg-gray-100'}`}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
 // Enhanced Content Row Component with Ratings and Downloads
 export const EnhancedContentRow = ({ title, content, addToMyList, removeFromMyList, myList, addToDownloads, rateContent, ratings, theme, profile }) => {
   const navigate = useNavigate();
