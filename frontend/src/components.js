@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { EnhancedContentRow, Top10Row, RecentlyAddedRow } from './enhanced-components';
+import { EnhancedContentRow, Top10Row, RecentlyAddedRow, DownloadsScreen } from './enhanced-components';
 
 // TMDB API Configuration
 const TMDB_API_KEYS = [
