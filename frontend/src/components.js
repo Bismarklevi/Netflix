@@ -862,7 +862,7 @@ export const NetflixHome = ({
 };
 
 // Search Screen Component
-export const SearchScreen = ({ profile, myList, addToMyList, removeFromMyList, setCurrentProfile }) => {
+export const SearchScreen = ({ profile, myList, ratings, theme, addToMyList, removeFromMyList, rateContent, setCurrentProfile, setTheme }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [recentSearches, setRecentSearches] = useState(['Action Movies', 'Comedy', 'Thriller', 'Documentary']);
@@ -913,11 +913,19 @@ export const SearchScreen = ({ profile, myList, addToMyList, removeFromMyList, s
     { name: 'Sci-Fi', image: 'https://via.placeholder.com/300x200/06b6d4/ffffff?text=Sci-Fi' },
     { name: 'Thriller', image: 'https://via.placeholder.com/300x200/374151/ffffff?text=Thriller' },
     { name: 'Documentary', image: 'https://via.placeholder.com/300x200/059669/ffffff?text=Documentary' },
+    { name: 'Kids & Family', image: 'https://via.placeholder.com/300x200/fbbf24/000000?text=Kids' },
+    { name: 'Anime', image: 'https://via.placeholder.com/300x200/8b5cf6/ffffff?text=Anime' },
   ];
 
   return (
-    <div className="bg-black min-h-screen">
-      <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+    <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'} min-h-screen`}>
+      <NetflixHeader 
+        profile={profile} 
+        setCurrentProfile={setCurrentProfile}
+        theme={theme}
+        setTheme={setTheme}
+        notifications={[]}
+      />
       
       <div className="pt-20 px-4">
         {/* Search Input */}
@@ -928,9 +936,9 @@ export const SearchScreen = ({ profile, myList, addToMyList, removeFromMyList, s
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for movies, TV shows..."
-              className="w-full bg-gray-800 text-white px-6 py-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              className={`w-full ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} px-6 py-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-red-600`}
             />
-            <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -939,15 +947,118 @@ export const SearchScreen = ({ profile, myList, addToMyList, removeFromMyList, s
         {/* Search Results */}
         {searchQuery && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">Search Results</h2>
+            <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-4`}>Search Results</h2>
             {loading ? (
               <div className="text-center py-8">
-                <div className="text-white">Searching...</div>
+                <div className={`${theme === 'dark' ? 'text-white' : 'text-black'}`}>Searching...</div>
               </div>
             ) : searchResults.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {searchResults.map((item) => (
                   <div 
+                    key={item.id}
+                    className="cursor-pointer group"
+                    onClick={() => navigate(`/watch/${item.id}`)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${item.poster_path || item.backdrop_path}`}
+                        alt={item.title || item.name}
+                        className="w-full h-64 object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = `https://via.placeholder.com/300x450/141414/ffffff?text=${encodeURIComponent(item.title || item.name)}`;
+                        }}
+                      />
+                      
+                      {/* Rating Display */}
+                      {ratings[item.id] && (
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-black px-2 py-1 rounded text-sm font-bold">
+                          ★ {ratings[item.id]}
+                        </div>
+                      )}
+
+                      <div className={`absolute inset-0 ${theme === 'dark' ? 'bg-black/60' : 'bg-white/60'} opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center`}>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isInMyList(item.id)) {
+                              removeFromMyList(item.id);
+                            } else {
+                              addToMyList(item);
+                            }
+                          }}
+                          className="bg-red-600 text-white rounded-full p-2 hover:bg-red-700"
+                        >
+                          {isInMyList(item.id) ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className={`${theme === 'dark' ? 'text-white' : 'text-black'} text-sm mt-2 line-clamp-2`}>{item.title || item.name}</h3>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                No results found for "{searchQuery}"
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Recent Searches */}
+        {!searchQuery && (
+          <div className="mb-8">
+            <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-4`}>Recent Searches</h2>
+            <div className="space-y-2">
+              {recentSearches.map((search, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSearchQuery(search)}
+                  className={`block ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-black'} text-left`}
+                >
+                  {search}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Browse Categories */}
+        {!searchQuery && (
+          <div>
+            <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-4`}>Browse by Category</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {categories.map((category, index) => (
+                <button
+                  key={index}
+                  onClick={() => navigate(`/browse/${category.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`)}
+                  className="relative rounded-md overflow-hidden group"
+                >
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <h3 className="text-white font-semibold text-center">{category.name}</h3>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}; 
                     key={item.id}
                     className="cursor-pointer group"
                     onClick={() => navigate(`/watch/${item.id}`)}
