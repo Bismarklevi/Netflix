@@ -565,3 +565,499 @@ export const NetflixHome = ({
     </div>
   );
 };
+
+// Search Screen Component
+export const SearchScreen = ({ profile, myList, addToMyList, removeFromMyList, setCurrentProfile }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [recentSearches, setRecentSearches] = useState(['Action Movies', 'Comedy', 'Thriller', 'Documentary']);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const searchContent = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await tmdbApi.get('/search/multi', {
+        params: {
+          api_key: getApiKey(),
+          query: query,
+          page: 1
+        }
+      });
+      setSearchResults(response.data.results);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      searchContent(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchQuery]);
+
+  const isInMyList = (contentId) => {
+    return myList.some(item => item.id === contentId);
+  };
+
+  const categories = [
+    { name: 'Action & Adventure', image: 'https://via.placeholder.com/300x200/dc2626/ffffff?text=Action' },
+    { name: 'Comedy', image: 'https://via.placeholder.com/300x200/fbbf24/000000?text=Comedy' },
+    { name: 'Drama', image: 'https://via.placeholder.com/300x200/7c3aed/ffffff?text=Drama' },
+    { name: 'Horror', image: 'https://via.placeholder.com/300x200/000000/ffffff?text=Horror' },
+    { name: 'Romance', image: 'https://via.placeholder.com/300x200/ec4899/ffffff?text=Romance' },
+    { name: 'Sci-Fi', image: 'https://via.placeholder.com/300x200/06b6d4/ffffff?text=Sci-Fi' },
+    { name: 'Thriller', image: 'https://via.placeholder.com/300x200/374151/ffffff?text=Thriller' },
+    { name: 'Documentary', image: 'https://via.placeholder.com/300x200/059669/ffffff?text=Documentary' },
+  ];
+
+  return (
+    <div className="bg-black min-h-screen">
+      <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+      
+      <div className="pt-20 px-4">
+        {/* Search Input */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for movies, TV shows..."
+              className="w-full bg-gray-800 text-white px-6 py-4 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+            />
+            <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Search Results */}
+        {searchQuery && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-white mb-4">Search Results</h2>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="text-white">Searching...</div>
+              </div>
+            ) : searchResults.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {searchResults.map((item) => (
+                  <div 
+                    key={item.id}
+                    className="cursor-pointer group"
+                    onClick={() => navigate(`/watch/${item.id}`)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${item.poster_path || item.backdrop_path}`}
+                        alt={item.title || item.name}
+                        className="w-full h-64 object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = `https://via.placeholder.com/300x450/141414/ffffff?text=${encodeURIComponent(item.title || item.name)}`;
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isInMyList(item.id)) {
+                              removeFromMyList(item.id);
+                            } else {
+                              addToMyList(item);
+                            }
+                          }}
+                          className="bg-red-600 text-white rounded-full p-2 hover:bg-red-700"
+                        >
+                          {isInMyList(item.id) ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className="text-white text-sm mt-2 line-clamp-2">{item.title || item.name}</h3>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                No results found for "{searchQuery}"
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Recent Searches */}
+        {!searchQuery && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-white mb-4">Recent Searches</h2>
+            <div className="space-y-2">
+              {recentSearches.map((search, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSearchQuery(search)}
+                  className="block text-gray-300 hover:text-white text-left"
+                >
+                  {search}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Browse Categories */}
+        {!searchQuery && (
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-4">Browse by Category</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {categories.map((category, index) => (
+                <button
+                  key={index}
+                  onClick={() => navigate(`/browse/${category.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`)}
+                  className="relative rounded-md overflow-hidden group"
+                >
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <h3 className="text-white font-semibold text-center">{category.name}</h3>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Browse Categories Component
+export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyList, setCurrentProfile }) => {
+  const { category } = useParams();
+  const navigate = useNavigate();
+  const [content, setContent] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategoryContent = async () => {
+      setLoading(true);
+      try {
+        let endpoint = '/discover/movie';
+        let params = { api_key: getApiKey(), page: 1 };
+
+        // Map category to appropriate API call
+        switch (category) {
+          case 'tv':
+            endpoint = '/discover/tv';
+            break;
+          case 'popular':
+            endpoint = '/movie/popular';
+            break;
+          case 'action-adventure':
+            params.with_genres = 28;
+            break;
+          case 'comedy':
+            params.with_genres = 35;
+            break;
+          case 'drama':
+            params.with_genres = 18;
+            break;
+          case 'horror':
+            params.with_genres = 27;
+            break;
+          case 'romance':
+            params.with_genres = 10749;
+            break;
+          case 'sci-fi':
+            params.with_genres = 878;
+            break;
+          case 'thriller':
+            params.with_genres = 53;
+            break;
+          case 'documentary':
+            params.with_genres = 99;
+            break;
+          default:
+            break;
+        }
+
+        const response = await tmdbApi.get(endpoint, { params });
+        setContent(response.data.results);
+      } catch (error) {
+        console.error('Error fetching category content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategoryContent();
+  }, [category]);
+
+  const isInMyList = (contentId) => {
+    return myList.some(item => item.id === contentId);
+  };
+
+  const getCategoryTitle = (cat) => {
+    return cat.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-black min-h-screen">
+        <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+        <div className="pt-20 flex items-center justify-center h-64">
+          <div className="text-white">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-black min-h-screen">
+      <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+      
+      <div className="pt-20 px-4">
+        <div className="flex items-center mb-6">
+          <button onClick={() => navigate('/')} className="text-white mr-4">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-2xl font-bold text-white">{getCategoryTitle(category)}</h1>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {content.map((item) => (
+            <div 
+              key={item.id}
+              className="cursor-pointer group"
+              onClick={() => navigate(`/watch/${item.id}`)}
+            >
+              <div className="relative">
+                <img
+                  src={`https://image.tmdb.org/t/p/w300${item.poster_path || item.backdrop_path}`}
+                  alt={item.title || item.name}
+                  className="w-full h-64 object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.src = `https://via.placeholder.com/300x450/141414/ffffff?text=${encodeURIComponent(item.title || item.name)}`;
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isInMyList(item.id)) {
+                        removeFromMyList(item.id);
+                      } else {
+                        addToMyList(item);
+                      }
+                    }}
+                    className="bg-red-600 text-white rounded-full p-2 hover:bg-red-700"
+                  >
+                    {isInMyList(item.id) ? (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              <h3 className="text-white text-sm mt-2 line-clamp-2">{item.title || item.name}</h3>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Video Player Component
+export const VideoPlayer = ({ addToContinueWatching }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [content, setContent] = useState(null);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+
+  useEffect(() => {
+    const fetchContentDetails = async () => {
+      try {
+        // Fetch content details
+        const contentResponse = await tmdbApi.get(`/movie/${id}`, {
+          params: { api_key: getApiKey() }
+        });
+        
+        // Fetch videos (trailers, etc.)
+        const videosResponse = await tmdbApi.get(`/movie/${id}/videos`, {
+          params: { api_key: getApiKey() }
+        });
+
+        setContent(contentResponse.data);
+        setVideos(videosResponse.data.results);
+        
+        // Add to continue watching
+        addToContinueWatching(contentResponse.data);
+      } catch (error) {
+        console.error('Error fetching content details:', error);
+        // Fallback content
+        setContent({
+          id: id,
+          title: 'Sample Content',
+          overview: 'This is sample content for demonstration.',
+          backdrop_path: '/sample.jpg'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContentDetails();
+  }, [id, addToContinueWatching]);
+
+  useEffect(() => {
+    // Hide controls after 3 seconds
+    const timer = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const getYouTubeTrailer = () => {
+    const trailer = videos.find(video => 
+      video.type === 'Trailer' && video.site === 'YouTube'
+    );
+    return trailer ? `https://www.youtube.com/embed/${trailer.key}?autoplay=1&controls=1` : null;
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-black min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  const youtubeUrl = getYouTubeTrailer();
+
+  return (
+    <div className="bg-black min-h-screen relative">
+      {/* Video Player */}
+      <div className="relative h-screen">
+        {youtubeUrl ? (
+          <iframe
+            src={youtubeUrl}
+            className="w-full h-full"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <div 
+            className="w-full h-full bg-cover bg-center relative"
+            style={{
+              backgroundImage: `url(https://image.tmdb.org/t/p/original${content?.backdrop_path})`,
+            }}
+          >
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="text-white text-center">
+                <h1 className="text-4xl font-bold mb-4">{content?.title}</h1>
+                <p className="text-xl mb-8">No trailer available</p>
+                <button
+                  onClick={() => navigate('/')}
+                  className="bg-red-600 text-white px-8 py-3 rounded-md hover:bg-red-700"
+                >
+                  Back to Browse
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Controls Overlay */}
+        {showControls && (
+          <div 
+            className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/80 flex flex-col justify-between p-4"
+            onClick={() => setShowControls(!showControls)}
+          >
+            {/* Top Controls */}
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={() => navigate('/')}
+                className="text-white hover:text-gray-300"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="text-white text-xl font-semibold">{content?.title}</h1>
+              <div></div>
+            </div>
+
+            {/* Bottom Controls */}
+            <div className="text-white">
+              <div className="mb-4">
+                <div className="bg-red-600 h-1 rounded-full mb-2" style={{ width: '30%' }}></div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>12:34</span>
+                  <span>45:67</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center space-x-8">
+                <button className="hover:text-gray-300">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+                  </svg>
+                </button>
+                
+                <button className="hover:text-gray-300">
+                  <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </button>
+                
+                <button className="hover:text-gray-300">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.055 7.06c-1.25-.714-2.805.189-2.805 1.628v8.123c0 1.44 1.555 2.342 2.805 1.628L12 14.471v2.34c0 1.44 1.555 2.342 2.805 1.628l7.108-4.061c1.26-.72 1.26-2.536 0-3.256L14.805 7.06C13.555 6.346 12 7.25 12 8.688v2.34L5.055 7.06z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content Info */}
+      {!showControls && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
+          <h2 className="text-white text-2xl font-bold mb-2">{content?.title}</h2>
+          <p className="text-gray-300 text-sm line-clamp-3">{content?.overview}</p>
+        </div>
+      )}
+    </div>
+  );
+};
