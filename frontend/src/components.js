@@ -413,7 +413,7 @@ const ContentRow = ({ title, content, addToMyList, removeFromMyList, myList }) =
 };
 
 // Hero Banner Component
-const HeroBanner = ({ content, addToMyList, removeFromMyList, myList }) => {
+const HeroBanner = ({ content, addToMyList, removeFromMyList, addToDownloads, myList, theme }) => {
   const navigate = useNavigate();
   
   if (!content) return null;
@@ -429,17 +429,17 @@ const HeroBanner = ({ content, addToMyList, removeFromMyList, myList }) => {
           backgroundImage: `url(https://image.tmdb.org/t/p/original${content.backdrop_path})`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"></div>
+        <div className={`absolute inset-0 bg-gradient-to-r ${theme === 'dark' ? 'from-black via-black/70' : 'from-white via-white/70'} to-transparent`}></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
       </div>
       
       {/* Content */}
       <div className="relative z-10 h-full flex items-center px-4 md:px-16">
         <div className="max-w-lg">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+          <h1 className={`text-4xl md:text-6xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} mb-4`}>
             {content.title || content.name}
           </h1>
-          <p className="text-lg text-gray-200 mb-6 line-clamp-3">
+          <p className={`text-lg ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} mb-6 line-clamp-3`}>
             {content.overview}
           </p>
           
@@ -447,7 +447,7 @@ const HeroBanner = ({ content, addToMyList, removeFromMyList, myList }) => {
           <div className="flex items-center space-x-4">
             <button 
               onClick={() => navigate(`/watch/${content.id}`)}
-              className="bg-white text-black px-8 py-3 rounded-md font-semibold flex items-center space-x-2 hover:bg-gray-200 transition-colors"
+              className={`${theme === 'dark' ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'} px-8 py-3 rounded-md font-semibold flex items-center space-x-2 transition-colors`}
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
@@ -462,7 +462,7 @@ const HeroBanner = ({ content, addToMyList, removeFromMyList, myList }) => {
                   addToMyList(content);
                 }
               }}
-              className="bg-gray-600/80 text-white px-8 py-3 rounded-md font-semibold flex items-center space-x-2 hover:bg-gray-500/80 transition-colors"
+              className={`${theme === 'dark' ? 'bg-gray-600/80 text-white hover:bg-gray-500/80' : 'bg-gray-300/80 text-black hover:bg-gray-400/80'} px-8 py-3 rounded-md font-semibold flex items-center space-x-2 transition-colors`}
             >
               {isInMyList ? (
                 <>
@@ -479,6 +479,15 @@ const HeroBanner = ({ content, addToMyList, removeFromMyList, myList }) => {
                   <span>My List</span>
                 </>
               )}
+            </button>
+            <button 
+              onClick={() => addToDownloads(content)}
+              className={`${theme === 'dark' ? 'bg-gray-600/80 text-white hover:bg-gray-500/80' : 'bg-gray-300/80 text-black hover:bg-gray-400/80'} px-8 py-3 rounded-md font-semibold flex items-center space-x-2 transition-colors`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Download</span>
             </button>
           </div>
         </div>
