@@ -1062,7 +1062,7 @@ export const SearchScreen = ({ profile, myList, ratings, theme, addToMyList, rem
 
 
 // Browse Categories Component
-export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyList, setCurrentProfile }) => {
+export const BrowseCategories = ({ profile, myList, ratings, theme, addToMyList, removeFromMyList, rateContent, setCurrentProfile, setTheme }) => {
   const { category } = useParams();
   const navigate = useNavigate();
   const [content, setContent] = useState([]);
@@ -1084,35 +1084,50 @@ export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyLis
             endpoint = '/movie/popular';
             break;
           case 'action-adventure':
-            params.with_genres = 28;
+            params.with_genres = GENRE_IDS.action;
             break;
           case 'comedy':
-            params.with_genres = 35;
+            params.with_genres = GENRE_IDS.comedy;
             break;
           case 'drama':
-            params.with_genres = 18;
+            params.with_genres = GENRE_IDS.drama;
             break;
           case 'horror':
-            params.with_genres = 27;
+            params.with_genres = GENRE_IDS.horror;
             break;
           case 'romance':
-            params.with_genres = 10749;
+            params.with_genres = GENRE_IDS.romance;
             break;
           case 'sci-fi':
-            params.with_genres = 878;
+            params.with_genres = GENRE_IDS.scienceFiction;
             break;
           case 'thriller':
-            params.with_genres = 53;
+            params.with_genres = GENRE_IDS.thriller;
             break;
           case 'documentary':
-            params.with_genres = 99;
+            params.with_genres = GENRE_IDS.documentary;
+            break;
+          case 'kids-family':
+            params.with_genres = GENRE_IDS.family;
+            break;
+          case 'anime':
+            params.with_genres = GENRE_IDS.anime;
             break;
           default:
             break;
         }
 
         const response = await tmdbApi.get(endpoint, { params });
-        setContent(response.data.results);
+        
+        // Filter content for kids if needed
+        let filteredContent = response.data.results;
+        if (profile?.isKid) {
+          filteredContent = response.data.results.filter(item => 
+            !item.adult && (item.genre_ids?.includes(GENRE_IDS.family) || item.genre_ids?.includes(GENRE_IDS.animation))
+          );
+        }
+        
+        setContent(filteredContent);
       } catch (error) {
         console.error('Error fetching category content:', error);
       } finally {
@@ -1121,7 +1136,7 @@ export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyLis
     };
 
     fetchCategoryContent();
-  }, [category]);
+  }, [category, profile]);
 
   const isInMyList = (contentId) => {
     return myList.some(item => item.id === contentId);
@@ -1133,27 +1148,44 @@ export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyLis
 
   if (loading) {
     return (
-      <div className="bg-black min-h-screen">
-        <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+      <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'} min-h-screen`}>
+        <NetflixHeader 
+          profile={profile} 
+          setCurrentProfile={setCurrentProfile}
+          theme={theme}
+          setTheme={setTheme}
+          notifications={[]}
+        />
         <div className="pt-20 flex items-center justify-center h-64">
-          <div className="text-white">Loading...</div>
+          <div className={`${theme === 'dark' ? 'text-white' : 'text-black'}`}>Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-black min-h-screen">
-      <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+    <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'} min-h-screen`}>
+      <NetflixHeader 
+        profile={profile} 
+        setCurrentProfile={setCurrentProfile}
+        theme={theme}
+        setTheme={setTheme}
+        notifications={[]}
+      />
       
       <div className="pt-20 px-4">
         <div className="flex items-center mb-6">
-          <button onClick={() => navigate('/')} className="text-white mr-4">
+          <button 
+            onClick={() => navigate('/')} 
+            className={`${theme === 'dark' ? 'text-white' : 'text-black'} mr-4`}
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-white">{getCategoryTitle(category)}</h1>
+          <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+            {getCategoryTitle(category)}
+          </h1>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -1172,7 +1204,15 @@ export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyLis
                     e.target.src = `https://via.placeholder.com/300x450/141414/ffffff?text=${encodeURIComponent(item.title || item.name)}`;
                   }}
                 />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                
+                {/* Rating Display */}
+                {ratings[item.id] && (
+                  <div className="absolute top-2 left-2 bg-yellow-500 text-black px-2 py-1 rounded text-sm font-bold">
+                    ★ {ratings[item.id]}
+                  </div>
+                )}
+
+                <div className={`absolute inset-0 ${theme === 'dark' ? 'bg-black/60' : 'bg-white/60'} opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center`}>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1196,8 +1236,16 @@ export const BrowseCategories = ({ profile, myList, addToMyList, removeFromMyLis
                   </button>
                 </div>
               </div>
-              <h3 className="text-white text-sm mt-2 line-clamp-2">{item.title || item.name}</h3>
+              <h3 className={`${theme === 'dark' ? 'text-white' : 'text-black'} text-sm mt-2 line-clamp-2`}>
+                {item.title || item.name}
+              </h3>
             </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
           ))}
         </div>
       </div>
