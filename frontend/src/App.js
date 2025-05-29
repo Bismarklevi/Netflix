@@ -92,6 +92,39 @@ function App() {
     });
   };
 
+  const addToWatchHistory = (content) => {
+    setWatchHistory(prev => {
+      const filtered = prev.filter(item => item.id !== content.id);
+      return [{ ...content, watchedAt: new Date().toISOString() }, ...filtered].slice(0, 50);
+    });
+  };
+
+  const addToDownloads = (content) => {
+    setDownloads(prev => {
+      const exists = prev.find(item => item.id === content.id);
+      if (exists) return prev;
+      return [{ ...content, downloadedAt: new Date().toISOString() }, ...prev];
+    });
+  };
+
+  const removeFromDownloads = (contentId) => {
+    setDownloads(prev => prev.filter(item => item.id !== contentId));
+  };
+
+  const addNotification = (notification) => {
+    setNotifications(prev => [
+      { id: Date.now(), ...notification, createdAt: new Date().toISOString() },
+      ...prev
+    ].slice(0, 20));
+  };
+
+  const rateContent = (contentId, rating) => {
+    setRatings(prev => ({
+      ...prev,
+      [contentId]: rating
+    }));
+  };
+
   return (
     <div className="App bg-black text-white min-h-screen">
       <BrowserRouter>
