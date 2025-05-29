@@ -101,9 +101,9 @@ const GENRE_IDS = {
 };
 
 // Profile Selection Component
-export const ProfileSelection = ({ setCurrentProfile }) => {
+export const ProfileSelection = ({ setCurrentProfile, theme }) => {
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-black' : 'bg-gray-100'} flex flex-col items-center justify-center px-4`}>
       {/* Netflix Logo */}
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-red-600 tracking-wide">NETFLIX</h1>
@@ -111,7 +111,7 @@ export const ProfileSelection = ({ setCurrentProfile }) => {
       
       {/* Who's Watching */}
       <div className="text-center">
-        <h2 className="text-3xl md:text-4xl font-light text-white mb-8">Who's watching?</h2>
+        <h2 className={`text-3xl md:text-4xl font-light ${theme === 'dark' ? 'text-white' : 'text-black'} mb-8`}>Who's watching?</h2>
         
         {/* Profiles Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
@@ -121,16 +121,23 @@ export const ProfileSelection = ({ setCurrentProfile }) => {
               onClick={() => setCurrentProfile(profile)}
               className="flex flex-col items-center group cursor-pointer"
             >
-              <div className={`w-24 h-24 md:w-32 md:h-32 ${profile.color} rounded-lg flex items-center justify-center text-4xl md:text-5xl group-hover:border-4 border-white transition-all duration-200`}>
+              <div className={`w-24 h-24 md:w-32 md:h-32 ${profile.color} rounded-lg flex items-center justify-center text-4xl md:text-5xl group-hover:border-4 border-white transition-all duration-200 relative`}>
                 {profile.avatar}
+                {profile.isKid && (
+                  <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs px-1 rounded">
+                    KIDS
+                  </div>
+                )}
               </div>
-              <p className="text-white mt-2 text-lg group-hover:text-gray-300">{profile.name}</p>
+              <p className={`${theme === 'dark' ? 'text-white group-hover:text-gray-300' : 'text-black group-hover:text-gray-600'} mt-2 text-lg`}>
+                {profile.name}
+              </p>
             </button>
           ))}
         </div>
         
         {/* Manage Profiles */}
-        <button className="text-gray-400 text-lg border border-gray-400 px-6 py-2 hover:text-white hover:border-white transition-colors">
+        <button className={`${theme === 'dark' ? 'text-gray-400 border-gray-400 hover:text-white hover:border-white' : 'text-gray-600 border-gray-600 hover:text-black hover:border-black'} text-lg border px-6 py-2 transition-colors`}>
           Manage Profiles
         </button>
       </div>
