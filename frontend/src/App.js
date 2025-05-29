@@ -6,7 +6,8 @@ import {
   NetflixHome, 
   SearchScreen, 
   VideoPlayer,
-  BrowseCategories 
+  BrowseCategories,
+  DownloadsScreen 
 } from "./components";
 
 function App() {
