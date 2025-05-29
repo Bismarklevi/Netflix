@@ -36,13 +36,69 @@ tmdbApi.interceptors.response.use(
   }
 );
 
-// Netflix Profiles Data
+// Netflix Profiles Data with Enhanced Features
 const NETFLIX_PROFILES = [
-  { id: 1, name: 'John', avatar: '👨', color: 'bg-blue-600' },
-  { id: 2, name: 'Sarah', avatar: '👩', color: 'bg-pink-600' },
-  { id: 3, name: 'Kids', avatar: '👶', color: 'bg-yellow-500' },
-  { id: 4, name: 'Guest', avatar: '👤', color: 'bg-gray-600' },
+  { 
+    id: 1, 
+    name: 'John', 
+    avatar: '👨', 
+    color: 'bg-blue-600',
+    isKid: false,
+    maturityRating: 'All',
+    language: 'English'
+  },
+  { 
+    id: 2, 
+    name: 'Sarah', 
+    avatar: '👩', 
+    color: 'bg-pink-600',
+    isKid: false,
+    maturityRating: 'All',
+    language: 'English'
+  },
+  { 
+    id: 3, 
+    name: 'Kids', 
+    avatar: '👶', 
+    color: 'bg-yellow-500',
+    isKid: true,
+    maturityRating: 'Kids',
+    language: 'English'
+  },
+  { 
+    id: 4, 
+    name: 'Guest', 
+    avatar: '👤', 
+    color: 'bg-gray-600',
+    isKid: false,
+    maturityRating: 'All',
+    language: 'English'
+  },
 ];
+
+// Additional Genre IDs for Enhanced Categories
+const GENRE_IDS = {
+  action: 28,
+  adventure: 12,
+  animation: 16,
+  comedy: 35,
+  crime: 80,
+  documentary: 99,
+  drama: 18,
+  family: 10751,
+  fantasy: 14,
+  history: 36,
+  horror: 27,
+  music: 10402,
+  mystery: 9648,
+  romance: 10749,
+  scienceFiction: 878,
+  thriller: 53,
+  war: 10752,
+  western: 37,
+  kids: 10762,
+  anime: 16 // Using animation for anime
+};
 
 // Profile Selection Component
 export const ProfileSelection = ({ setCurrentProfile }) => {
