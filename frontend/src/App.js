@@ -13,16 +13,31 @@ function App() {
   const [currentProfile, setCurrentProfile] = useState(null);
   const [myList, setMyList] = useState([]);
   const [continueWatching, setContinueWatching] = useState([]);
+  const [watchHistory, setWatchHistory] = useState([]);
+  const [downloads, setDownloads] = useState([]);
+  const [theme, setTheme] = useState('dark');
+  const [notifications, setNotifications] = useState([]);
+  const [ratings, setRatings] = useState({});
 
   // Load saved data from localStorage
   useEffect(() => {
     const savedProfile = localStorage.getItem('netflixProfile');
     const savedMyList = localStorage.getItem('netflixMyList');
     const savedContinueWatching = localStorage.getItem('netflixContinueWatching');
+    const savedWatchHistory = localStorage.getItem('netflixWatchHistory');
+    const savedDownloads = localStorage.getItem('netflixDownloads');
+    const savedTheme = localStorage.getItem('netflixTheme');
+    const savedNotifications = localStorage.getItem('netflixNotifications');
+    const savedRatings = localStorage.getItem('netflixRatings');
     
     if (savedProfile) setCurrentProfile(JSON.parse(savedProfile));
     if (savedMyList) setMyList(JSON.parse(savedMyList));
     if (savedContinueWatching) setContinueWatching(JSON.parse(savedContinueWatching));
+    if (savedWatchHistory) setWatchHistory(JSON.parse(savedWatchHistory));
+    if (savedDownloads) setDownloads(JSON.parse(savedDownloads));
+    if (savedTheme) setTheme(savedTheme);
+    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+    if (savedRatings) setRatings(JSON.parse(savedRatings));
   }, []);
 
   // Save data to localStorage
@@ -37,6 +52,26 @@ function App() {
   useEffect(() => {
     localStorage.setItem('netflixContinueWatching', JSON.stringify(continueWatching));
   }, [continueWatching]);
+
+  useEffect(() => {
+    localStorage.setItem('netflixWatchHistory', JSON.stringify(watchHistory));
+  }, [watchHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('netflixDownloads', JSON.stringify(downloads));
+  }, [downloads]);
+
+  useEffect(() => {
+    localStorage.setItem('netflixTheme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('netflixNotifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem('netflixRatings', JSON.stringify(ratings));
+  }, [ratings]);
 
   const addToMyList = (content) => {
     setMyList(prev => {
