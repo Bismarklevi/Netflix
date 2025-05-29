@@ -492,9 +492,20 @@ export const NetflixHome = ({
   profile, 
   myList, 
   continueWatching, 
+  watchHistory,
+  downloads,
+  notifications,
+  ratings,
+  theme,
   addToMyList, 
   removeFromMyList, 
   addToContinueWatching,
+  addToWatchHistory,
+  addToDownloads,
+  removeFromDownloads,
+  addNotification,
+  rateContent,
+  setTheme,
   setCurrentProfile 
 }) => {
   const [content, setContent] = useState({
@@ -506,9 +517,14 @@ export const NetflixHome = ({
     horror: [],
     romance: [],
     documentary: [],
+    kids: [],
+    anime: [],
+    international: [],
+    recentlyAdded: [],
     hero: null
   });
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -517,11 +533,15 @@ export const NetflixHome = ({
           tmdbApi.get('/trending/all/day', { params: { api_key: getApiKey() } }),
           tmdbApi.get('/movie/popular', { params: { api_key: getApiKey() } }),
           tmdbApi.get('/movie/top_rated', { params: { api_key: getApiKey() } }),
-          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: 28 } }), // Action
-          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: 35 } }), // Comedy
-          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: 27 } }), // Horror
-          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: 10749 } }), // Romance
-          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: 99 } }), // Documentary
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.action } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.comedy } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.horror } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.romance } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.documentary } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.family } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_genres: GENRE_IDS.animation } }),
+          tmdbApi.get('/discover/movie', { params: { api_key: getApiKey(), with_original_language: 'ko|ja|es|fr' } }),
+          tmdbApi.get('/movie/now_playing', { params: { api_key: getApiKey() } }),
         ];
 
         const responses = await Promise.all(requests);
@@ -535,8 +555,21 @@ export const NetflixHome = ({
           horror: responses[5].data.results,
           romance: responses[6].data.results,
           documentary: responses[7].data.results,
-          hero: responses[0].data.results[0] // Use first trending item as hero
+          kids: responses[8].data.results,
+          anime: responses[9].data.results,
+          international: responses[10].data.results,
+          recentlyAdded: responses[11].data.results,
+          hero: responses[0].data.results[0]
         });
+
+        // Add sample notification for new releases
+        if (responses[11].data.results.length > 0) {
+          addNotification({
+            title: 'New Releases Available!',
+            message: `Check out ${responses[11].data.results[0].title || responses[11].data.results[0].name} and more new content.`,
+          });
+        }
+
       } catch (error) {
         console.error('Error fetching content:', error);
         // Fallback mock data if API fails
@@ -556,6 +589,10 @@ export const NetflixHome = ({
           horror: [mockContent],
           romance: [mockContent],
           documentary: [mockContent],
+          kids: [mockContent],
+          anime: [mockContent],
+          international: [mockContent],
+          recentlyAdded: [mockContent],
           hero: mockContent
         });
       } finally {
@@ -564,117 +601,223 @@ export const NetflixHome = ({
     };
 
     fetchContent();
-  }, []);
+  }, [addNotification]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className={`min-h-screen ${theme === 'dark' ? 'bg-black' : 'bg-white'} flex items-center justify-center`}>
         <div className="text-red-600 text-4xl font-bold animate-pulse">NETFLIX</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-black min-h-screen">
-      <NetflixHeader profile={profile} setCurrentProfile={setCurrentProfile} />
+    <div className={`${theme === 'dark' ? 'bg-black' : 'bg-white'} min-h-screen`}>
+      <NetflixHeader 
+        profile={profile} 
+        setCurrentProfile={setCurrentProfile}
+        theme={theme}
+        setTheme={setTheme}
+        notifications={notifications}
+      />
       
       {/* Hero Banner */}
       <HeroBanner 
         content={content.hero} 
         addToMyList={addToMyList}
         removeFromMyList={removeFromMyList}
+        addToDownloads={addToDownloads}
         myList={myList}
+        theme={theme}
       />
       
       {/* Content Rows */}
       <div className="relative -mt-32 z-20">
         {continueWatching.length > 0 && (
-          <ContentRow 
+          <EnhancedContentRow 
             title="Continue Watching" 
             content={continueWatching}
             addToMyList={addToMyList}
             removeFromMyList={removeFromMyList}
+            addToDownloads={addToDownloads}
+            rateContent={rateContent}
             myList={myList}
+            ratings={ratings}
+            theme={theme}
+            profile={profile}
           />
         )}
         
-        <ContentRow 
+        <EnhancedContentRow 
           title="Trending Now" 
           content={content.trending}
           addToMyList={addToMyList}
           removeFromMyList={removeFromMyList}
+          addToDownloads={addToDownloads}
+          rateContent={rateContent}
           myList={myList}
+          ratings={ratings}
+          theme={theme}
+          profile={profile}
         />
-        
+
+        <Top10Row 
+          content={content.popular}
+          theme={theme}
+          profile={profile}
+          navigate={navigate}
+        />
+
+        <RecentlyAddedRow 
+          content={content.recentlyAdded}
+          theme={theme}
+          profile={profile}
+          navigate={navigate}
+        />
+
         {myList.length > 0 && (
-          <ContentRow 
+          <EnhancedContentRow 
             title="My List" 
             content={myList}
             addToMyList={addToMyList}
             removeFromMyList={removeFromMyList}
+            addToDownloads={addToDownloads}
+            rateContent={rateContent}
             myList={myList}
+            ratings={ratings}
+            theme={theme}
+            profile={profile}
           />
         )}
         
-        <ContentRow 
+        <EnhancedContentRow 
           title="Popular on Netflix" 
           content={content.popular}
           addToMyList={addToMyList}
           removeFromMyList={removeFromMyList}
+          addToDownloads={addToDownloads}
+          rateContent={rateContent}
           myList={myList}
+          ratings={ratings}
+          theme={theme}
+          profile={profile}
         />
+
+        {!profile?.isKid && (
+          <>
+            <EnhancedContentRow 
+              title="Action & Adventure" 
+              content={content.action}
+              addToMyList={addToMyList}
+              removeFromMyList={removeFromMyList}
+              addToDownloads={addToDownloads}
+              rateContent={rateContent}
+              myList={myList}
+              ratings={ratings}
+              theme={theme}
+              profile={profile}
+            />
+            
+            <EnhancedContentRow 
+              title="Horror Movies" 
+              content={content.horror}
+              addToMyList={addToMyList}
+              removeFromMyList={removeFromMyList}
+              addToDownloads={addToDownloads}
+              rateContent={rateContent}
+              myList={myList}
+              ratings={ratings}
+              theme={theme}
+              profile={profile}
+            />
+          </>
+        )}
         
-        <ContentRow 
-          title="Top Rated" 
-          content={content.topRated}
-          addToMyList={addToMyList}
-          removeFromMyList={removeFromMyList}
-          myList={myList}
-        />
-        
-        <ContentRow 
-          title="Action & Adventure" 
-          content={content.action}
-          addToMyList={addToMyList}
-          removeFromMyList={removeFromMyList}
-          myList={myList}
-        />
-        
-        <ContentRow 
+        <EnhancedContentRow 
           title="Comedies" 
           content={content.comedy}
           addToMyList={addToMyList}
           removeFromMyList={removeFromMyList}
+          addToDownloads={addToDownloads}
+          rateContent={rateContent}
           myList={myList}
+          ratings={ratings}
+          theme={theme}
+          profile={profile}
         />
+
+        {profile?.isKid ? (
+          <EnhancedContentRow 
+            title="Kids & Family" 
+            content={content.kids}
+            addToMyList={addToMyList}
+            removeFromMyList={removeFromMyList}
+            addToDownloads={addToDownloads}
+            rateContent={rateContent}
+            myList={myList}
+            ratings={ratings}
+            theme={theme}
+            profile={profile}
+          />
+        ) : (
+          <>
+            <EnhancedContentRow 
+              title="Anime" 
+              content={content.anime}
+              addToMyList={addToMyList}
+              removeFromMyList={removeFromMyList}
+              addToDownloads={addToDownloads}
+              rateContent={rateContent}
+              myList={myList}
+              ratings={ratings}
+              theme={theme}
+              profile={profile}
+            />
+            
+            <EnhancedContentRow 
+              title="International Movies" 
+              content={content.international}
+              addToMyList={addToMyList}
+              removeFromMyList={removeFromMyList}
+              addToDownloads={addToDownloads}
+              rateContent={rateContent}
+              myList={myList}
+              ratings={ratings}
+              theme={theme}
+              profile={profile}
+            />
+          </>
+        )}
         
-        <ContentRow 
-          title="Horror Movies" 
-          content={content.horror}
-          addToMyList={addToMyList}
-          removeFromMyList={removeFromMyList}
-          myList={myList}
-        />
-        
-        <ContentRow 
+        <EnhancedContentRow 
           title="Romantic Movies" 
           content={content.romance}
           addToMyList={addToMyList}
           removeFromMyList={removeFromMyList}
+          addToDownloads={addToDownloads}
+          rateContent={rateContent}
           myList={myList}
+          ratings={ratings}
+          theme={theme}
+          profile={profile}
         />
         
-        <ContentRow 
+        <EnhancedContentRow 
           title="Documentaries" 
           content={content.documentary}
           addToMyList={addToMyList}
           removeFromMyList={removeFromMyList}
+          addToDownloads={addToDownloads}
+          rateContent={rateContent}
           myList={myList}
+          ratings={ratings}
+          theme={theme}
+          profile={profile}
         />
       </div>
       
       {/* Footer */}
-      <footer className="bg-black text-gray-400 p-8 mt-16">
+      <footer className={`${theme === 'dark' ? 'bg-black text-gray-400' : 'bg-white text-gray-600'} p-8 mt-16`}>
         <div className="max-w-4xl mx-auto">
           <p className="mb-4">Questions? Contact us.</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
